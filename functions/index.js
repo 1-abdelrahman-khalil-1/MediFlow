@@ -867,37 +867,6 @@ async function executeTool(name, args, authInfo) {
   throw new Error(`Unknown function call: ${name}`);
 }
 
-exports.getForecastSecure = onCall({ secrets: [GEMINI_API_KEY] }, async (request) => {
-  if (!request.auth) throw new HttpsError('unauthenticated', 'User must log in');
-
-  const db = admin.firestore();
-  await getUserFacilityAndRole(request.auth, db);
-
-  await checkRateLimit(
-    request.auth.uid,
-    "getForecastSecure",
-    LIMITS.AI
-  );
-
-  const { medicineName, logs, daysToForecast } = request.data;
-  const logSummary = logs
-    .map(l => `Date: ${l.date}, Used: ${l.used}`)
-    .join('\n');
-  const prompt = `Forecast ${daysToForecast} days for ${medicineName}. History:\n${logSummary}\nOutput JSON: {"prediction": int, "reasoning": "string"}`;
-
-  try {
-    const genAI = getGenAI();
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-    return JSON.parse(jsonMatch ? jsonMatch[0] : responseText);
-  } catch (error) {
-    logger.error("Gemini Error:", error);
-    throw new HttpsError('internal', 'AI forecasting failed');
-  }
-});
-
 exports.generateSmartAlertsSecure = onCall({ secrets: [GEMINI_API_KEY] }, async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'User must log in');
 
