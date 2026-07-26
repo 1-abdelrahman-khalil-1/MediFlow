@@ -264,9 +264,17 @@ exports.forecastDemand = onCall({ secrets: [GEMINI_API_KEY] }, async (request) =
     LIMITS.AI
   );
 
+  if (!medicineNames || !Array.isArray(medicineNames)) {
+    throw new HttpsError('invalid-argument', 'medicineNames must be an array');
+  }
+
   // 1. Fetch facility details
   const facilityDoc = await db.collection("facilities").doc(facilityId).get();
   const facility = facilityDoc.data();
+
+  if (!facility || typeof facility.name !== 'string') {
+    throw new HttpsError('invalid-argument', 'facility must have a valid name property');
+  }
 
   // 2. Fetch last 90 days of usage_logs
   const ninetyDaysAgo = new Date();
@@ -881,6 +889,10 @@ exports.generateSmartAlertsSecure = onCall({ secrets: [GEMINI_API_KEY] }, async 
     LIMITS.AI
   );
 
+  if (!inventory || !Array.isArray(inventory)) {
+    throw new HttpsError('invalid-argument', 'inventory must be an array');
+  }
+
   const payload = inventory
     .map(i => `${i.medicineName} (Batch: ${i.batchId}): ${i.remainingQuantity}/${i.initialQuantity} units left. Expiry: ${i.expiryDate}`)
     .join('\n');
@@ -915,6 +927,10 @@ exports.getChatResponseSecure = onCall({ secrets: [GEMINI_API_KEY] }, async (req
     "getChatResponseSecure",
     LIMITS.AI
   );
+
+  if (!history || !Array.isArray(history)) {
+    throw new HttpsError('invalid-argument', 'history must be an array');
+  }
 
   const contextStr = JSON.stringify(clientContext);
 
