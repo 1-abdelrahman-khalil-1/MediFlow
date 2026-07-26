@@ -336,16 +336,22 @@ class _AIForecastPageState extends ConsumerState<AIForecastPage> {
   }
 
   Widget _buildLegendDot(Color color, String label) {
-    return Row(children: [
-      Container(
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(
-              color: color, borderRadius: BorderRadius.circular(3))),
-      const SizedBox(width: 6),
-      Text(label,
-          style: const TextStyle(fontSize: 12, color: MediColors.textMuted)),
-    ]);
+    return Semantics(
+      label: '$label series',
+      child: ExcludeSemantics(
+        child: Row(children: [
+          Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                  color: color, borderRadius: BorderRadius.circular(3))),
+          const SizedBox(width: 6),
+          Text(label,
+              style:
+                  const TextStyle(fontSize: 12, color: MediColors.textMuted)),
+        ]),
+      ),
+    );
   }
 
   Widget _buildChart() {
