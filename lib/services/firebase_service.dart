@@ -8,6 +8,7 @@ import '../models/facility.dart';
 import '../models/inventory_item.dart';
 import '../models/daily_usage_log.dart';
 import '../models/request.dart';
+import '../models/audit_log.dart';
 import 'simulation_service.dart';
 
 final firebaseServiceProvider = Provider<FirebaseService>((ref) {
@@ -629,6 +630,45 @@ class FirebaseService {
       return null; // Success
     } catch (e) {
       return 'Critical error: $e';
+    }
+  }
+
+  // --- AUDIT LOGS ---
+
+  Future<PaginatedAuditLogsResult> getPaginatedAuditLogs({
+    int pageSize = 20,
+    DocumentSnapshot? startAfter,
+    String? actionFilter,
+  }) async {
+    try {
+      Query query = _firestore.collection('audit_logs');
+      
+      if (actionFilter != null && actionFilter.isNotEmpty && actionFilter != 'All') {
+        query = query.where('action', isEqualTo: actionFilter);
+      }
+      
+      query = query.orderBy('timestamp', descending: true).limit(pageSize);
+
+      if (startAfter != null) {
+        query = query.startAfterDocument(startAfter);
+      }
+
+      final snapshot = await query.get();
+      final logs = snapshot.docs
+          .map((doc) =>
+              AuditLog.fromMap(doc.data() as Map<String, dynamic>, doc.id))
+          .toList();
+
+      final hasMore = snapshot.docs.length == pageSize;
+      final lastDocument = snapshot.docs.isNotEmpty ? snapshot.docs.last : null;
+
+      return PaginatedAuditLogsResult(
+        logs: logs,
+        lastDocument: lastDocument,
+        hasMore: hasMore,
+      );
+    } catch (e) {
+      throw Exception('Error fetching audit logs: $e');
     }
   }
 }
