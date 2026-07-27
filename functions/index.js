@@ -659,6 +659,7 @@ exports.onIndentApproved = onDocumentUpdated("requests/{requestId}", async (even
           }
 
           transaction.update(event.data.after.ref, {
+            status: "fulfilled",
             resolvedAt: admin.firestore.FieldValue.serverTimestamp(),
           });
         });
@@ -720,6 +721,7 @@ exports.onIndentApproved = onDocumentUpdated("requests/{requestId}", async (even
           }
 
           transaction.update(event.data.after.ref, {
+            status: "fulfilled",
             resolvedAt: admin.firestore.FieldValue.serverTimestamp(),
           });
         });
@@ -728,6 +730,10 @@ exports.onIndentApproved = onDocumentUpdated("requests/{requestId}", async (even
         );
       } catch (err) {
         logger.error(`Stock update failed for request ${requestId}:`, err);
+        await event.data.after.ref.update({
+          status: "rejected",
+          rejectionReason: err.message,
+        });
       }
     }
   }
